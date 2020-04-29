@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "/Users/jialeduan/.local/share/virtualenvs/guichui-ijh4sVE7/bin/python",
+    "python.linting.flake8Enabled": false,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true
+}
