@@ -4,12 +4,19 @@ import os
 
 
 def fetchHome(url):
-    source = requests.get(url)
+    with requests.Session() as se:
+        se.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en"
+        }
+    source = se.get(url)
     soup = BeautifulSoup(source.text, 'html.parser')
     book_title = soup.find_all(class_="title")
     book_list = soup.find_all(class_='book-list')
     current_dir = os.getcwd()
-
+    result = -1
     for index, book in enumerate(book_list):
         chapter_list = book.find_all('a')
         title = book_title[index].h3.a.string
@@ -19,20 +26,37 @@ def fetchHome(url):
         for chapter in chapter_list:
             f = open(os.path.join(dir, str(index) + '.txt'), 'a')
             # f.write(chapter.string + "\n")
-            fetchChapter(f, chapter.get('href'))
+            result = fetchChapter(f, chapter.get('href'), index)
             index += 1
+            if result == 0:
+                break
         print(f"Write {title} successfully!")
         f.close()
+        if result == 0:
+            print("Return with error!!")
+            break
 
 
-def fetchChapter(file, url):
-    book_source = requests.get(url)
+def fetchChapter(file, url, index):
+    with requests.Session() as chapter_se:
+        chapter_se.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en"
+        }
+    book_source = chapter_se.get(url)
     soup = BeautifulSoup(book_source.text, 'html.parser')
-    chapter_title = soup.find(id='nr_title').string
-    print(chapter_title + "\n")
-    # file.write(chapter_title + "\n")
-    p_list = soup.find(id='nr1').find_all('p')
-    writeToTxt(file, p_list)
+    chapter_title = soup.find(id='nr_title')
+    if chapter_title is not None:
+        chapter_title = chapter_title.string
+        # file.write(chapter_title + "\n")
+        p_list = soup.find(id='nr1').find_all('p')
+        writeToTxt(file, p_list)
+        return 1
+    else:
+        print(f"Reading Chapter {index} error!!!")
+        return 0
 
 
 def writeToTxt(file, paragraphs):
