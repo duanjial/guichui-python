@@ -1,14 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+import re
 
 
 def fetchHome(url):
     with requests.Session() as se:
         se.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+            "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
             "Accept-Encoding": "gzip, deflate",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept":
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "en"
         }
     source = se.get(url)
@@ -18,15 +21,26 @@ def fetchHome(url):
     current_dir = os.getcwd()
     result = -1
     for index, book in enumerate(book_list):
-        chapter_list = book.find_all('a')
+        # chapter_list = book.find_all('a')
+        chapter_list = book.find_all('b')
         title = book_title[index].h3.a.string
         os.mkdir(title)
         dir = os.path.join(current_dir, title)
         index = 0
         for chapter in chapter_list:
             f = open(os.path.join(dir, str(index) + '.txt'), 'a')
-            # f.write(chapter.string + "\n")
-            result = fetchChapter(f, chapter.get('href'), index)
+            f.write(chapter.string + "\n")
+            try:
+                if re.match("window.open", chapter["onclick"]):
+                    k = chapter["onclick"]
+                    # print(k)
+                    # print(re.findall('https.*htm', k))
+                    x = re.findall('https.*htm', k)
+                    if x:
+                        result = fetchChapter(f, x[0], index)
+            except:
+                pass
+
             index += 1
             if result == 0:
                 break
@@ -40,9 +54,11 @@ def fetchHome(url):
 def fetchChapter(file, url, index):
     with requests.Session() as chapter_se:
         chapter_se.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
+            "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36",
             "Accept-Encoding": "gzip, deflate",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept":
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "Accept-Language": "en"
         }
     book_source = chapter_se.get(url)
@@ -67,4 +83,5 @@ def writeToTxt(file, paragraphs):
 
 if __name__ == '__main__':
     homeUrl = "https://www.luoxia.com/guichui/"
+    # homeUrl = "https://www.luoxia.com/qing/"
     fetchHome(homeUrl)
