@@ -22,29 +22,41 @@ def fetchHome(url):
     result = -1
     for index, book in enumerate(book_list):
         # chapter_list = book.find_all('a')
-        chapter_list = book.find_all('b')
+        # chapter_list = book.find_all('b')
+        chapter_list = book.find_all('li')
         title = book_title[index].h3.a.string
         os.mkdir(title)
         dir = os.path.join(current_dir, title)
         index = 0
+        directory = open(os.path.join(current_dir, "dirs/" + title + ".txt"),
+                         'a')
         for chapter in chapter_list:
             f = open(os.path.join(dir, str(index) + '.txt'), 'a')
-            f.write(chapter.string + "\n")
-            try:
-                if re.match("window.open", chapter["onclick"]):
-                    k = chapter["onclick"]
-                    # print(k)
-                    # print(re.findall('https.*htm', k))
-                    x = re.findall('https.*htm', k)
-                    if x:
-                        result = fetchChapter(f, x[0], index)
-            except:
-                pass
+            # f.write(chapter.string + "\n")
+            child = chapter.find('a')
+            if child:
+                result = fetchChapter(f, child.get('href'), index)
+                directory.write(child.get("title") + "\n")
+            else:
+                child = chapter.find('b')
+                directory.write(child.get("title") + "\n")
+                # print(child)
+                try:
+                    if re.match("window.open", child["onclick"]):
+                        k = child["onclick"]
+                        # print(k)
+                        # print(re.findall('https.*htm', k))
+                        x = re.findall('https.*htm', k)
+                        if x:
+                            result = fetchChapter(f, x[0], index)
+                except:
+                    pass
 
             index += 1
             if result == 0:
                 break
         print(f"Write {title} successfully!")
+        directory.close()
         f.close()
         if result == 0:
             print("Return with error!!")
